@@ -27,6 +27,18 @@ def getColorNameFromRGB(rgb_tuple, rgb_values, names):
     return names[index]
 
 
+def extractInfo(response, responseKey, resNum, res, resKey):
+    try:
+        extractList = response[responseKey]
+    except:
+        print('no ' + responseKey)
+    
+    for i in range(resNum):
+        try:
+            res[resKey].append(extractList[i]["description"])
+        except:
+            print('no enough ' + resKey)
+
 def getDetial(image_file):
 
     image_base64 = encode_image_from_file(image_file)
@@ -34,29 +46,45 @@ def getDetial(image_file):
 
     res = {'objectLabel': [], 'objectLogo': [],
            'objectText': [], 'objectColor': []}
-    labelList = response['responses'][0]["labelAnnotations"]
+    
+    extractInfo(response['responses'][0], "labelAnnotations", 3, res, 'objectLabel')
+    extractInfo(response['responses'][0], "logoAnnotations", 3, res, 'objectLogo')
 
-    for label in labelList:
-        if float(label['score']) >= 0.85:
-            res['objectLabel'].append(label["description"])
-        if float(label['score']) < 0.85:
-            break
+    # for label in labelList:
+    #     if float(label['score']) >= 0.85:
+    #         res['objectLabel'].append(label["description"])
+    #     if float(label['score']) < 0.85:
+    #         break
 
-    logoList = response['responses'][0]["logoAnnotations"]
-    for logo in logoList:
-        if float(logo['score']) >= 0.8:
-            res['objectLogo'].append(logo["description"])
-        if float(logo['score']) < 0.8:
-            break
+    # logoList = response['responses'][0]["logoAnnotations"]
+    # for logo in logoList:
+    #     if float(logo['score']) >= 0.8:
+    #         res['objectLogo'].append(logo["description"])
+    #     if float(logo['score']) < 0.8:
+    #         break
 
     textList = response['responses'][0]["textAnnotations"]
-    for text in textList:
-        res['objectText'].append(text["description"])
+    try:
+        res['objectText']= textList[0]["description"].split("\n")
+    except:
+        print('no enough objectText')
 
     colorList = response['responses'][0]["imagePropertiesAnnotation"]["dominantColors"]["colors"]
     rgb_values, names = getRGBValues()
-    for color in colorList:
-        if float(color['score']) >= 0.1:
+    # for color in colorList:
+    #     if float(color['score']) >= 0.1:
+    #         rgbList = [color["color"]['red'], color["color"]
+    #                    ['green'], color["color"]['blue']]
+    #         res['objectColor'].append(
+    #             {'colorName': getColorNameFromRGB(tuple(rgbList), rgb_values, names),
+    #              'rgb': rgbList
+    #              }
+    #         )
+    #     if float(color['score']) < 0.1:
+    #         break
+    for i in range(3):
+        try:
+            color = colorList[i]
             rgbList = [color["color"]['red'], color["color"]
                        ['green'], color["color"]['blue']]
             res['objectColor'].append(
@@ -64,13 +92,13 @@ def getDetial(image_file):
                  'rgb': rgbList
                  }
             )
-        if float(logo['score']) < 0.1:
-            break
+        except:
+            print('no enough objectColor')
 
     return res
 
 
-# print(time.time())
-# a = getDetial('/opt/mycroft/skills/sandbox-git-skill/photo/multi.jpeg')
-# print(a)
-# print(time.time())
+print(time.time())
+a = getDetial('/opt/mycroft/skills/sandbox-git-skill/photo/multi.jpeg')
+print(a)
+print(time.time())
