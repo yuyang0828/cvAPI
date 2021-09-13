@@ -8,7 +8,7 @@ import cv2
 
 
 def getObjectsThenLabel(image_file):
-    print('== api fisrt call', time.time())
+    # print('== api fisrt call', time.time())
     image_base64 = encode_image_from_file(image_file)
     # image_pil = Image.open(image_file)
     image_cv = cv2.imread(image_file)
@@ -18,14 +18,14 @@ def getObjectsThenLabel(image_file):
 
     obj_loc_list = response['responses'][0]["localizedObjectAnnotations"]
 
-    print('== api fisrt call end', time.time())
+    # print('== api fisrt call end', time.time())
 
     # w, h = image_pil.size
     h, w, _ = image_cv.shape
 
     res = {'objectNum': len(obj_loc_list), 'objectList': []}
     for obj_loc in obj_loc_list:
-        print('==== loop one start', time.time())
+        # print('==== loop one start', time.time())
         vx_list = obj_loc["boundingPoly"]["normalizedVertices"]
         ux = int(math.floor(vx_list[0]['x'] * w))
         uy = int(math.floor(vx_list[0]['y'] * h))
@@ -45,13 +45,26 @@ def getObjectsThenLabel(image_file):
         image_cv_single_obj_bytes = image_cv_single_obj_arr.tobytes()
         image_base64_single_obj = base64.b64encode(image_cv_single_obj_bytes)
 
-        print('====== get label start', time.time())
+        # print('====== get label start', time.time())
         label_list = getLabel(image_base64_single_obj)
-        print('====== get label end', time.time())
-        obj_label = {'name': label_list, 'loc': [ux, uy, dx, dy]}
+        # print('====== get label end', time.time())
+
+        loc_str = 'center'
+        cx = (vx_list[2]['x'] - vx_list[0]['x']) / 2.0 + vx_list[0]['x']
+        cy = (vx_list[2]['y'] - vx_list[0]['y']) / 2.0 + vx_list[0]['y']
+        if cx < 0.5 and cy < 0.5:
+            loc_str = 'upper right'
+        elif cx < 0.5 and cy > 0.5:
+            loc_str = 'lower right'
+        elif cx > 0.5 and cy < 0.5:
+            loc_str = 'upper left'
+        elif cx > 0.5 and cy > 0.5:
+            loc_str = 'lower left'
+
+        obj_label = {'name': label_list, 'loc': loc_str}
         res['objectList'].append(obj_label)
 
-        print('==== one loop end', time.time())
+        # print('==== one loop end', time.time())
 
     return res
 
@@ -59,21 +72,23 @@ def getObjectsThenLabel(image_file):
 def getLabel(image_base64):
     # get label of a single object
 
-    print('======== in loop call api', time.time())
+    # print('======== in loop call api', time.time())
     response = callAPI(image_base64, 'LABEL')
-    print('======== in loop call api end', time.time())
+    # print('======== in loop call api end', time.time())
     labelList = response['responses'][0]["labelAnnotations"]
     res = []
-    for label in labelList:
-        if float(label['score']) >= 0.9:
-            res.append(label["description"])
-        if float(label['score']) < 0.9:
-            break
+    # for label in labelList:
+    #     if float(label['score']) >= 0.8:
+    #         res.append(label["description"])
+    #     if float(label['score']) < 0.8:
+    #         break
+    for i in range(3):
+        res.append(labelList[i]["description"])
     return res
 
 
-# print('start', time.time())
-# a = getObjectsThenLabel(
-#     '/opt/mycroft/skills/sandbox-git-skill/photo/multi.jpeg')
-# print(a)
-# print('end', time.time())
+print('start', time.time())
+a = getObjectsThenLabel(
+    '/opt/mycroft/skills/sandbox-git-skill/photo/multi.jpeg')
+print(a)
+print('end', time.time())
