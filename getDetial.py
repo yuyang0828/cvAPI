@@ -70,7 +70,7 @@ def getDetial(image_file):
     return res
 
 
-print(time.time())
-a = getDetial('/opt/mycroft/skills/sandbox-git-skill/photo/multi.jpeg')
-print(a)
-print(time.time())
+# print(time.time())
+# a = getDetial('/opt/mycroft/skills/sandbox-git-skill/photo/multi.jpeg')
+# print(a)
+# print(time.time())
